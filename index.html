@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<script type="text/javascript" src="./js/main.js"></script>
+	<title>图片上传插件</title>
+</head>
+<body>
+	<div class="weui-imgbox" id="imglist">	
+		<div class="weui-imgupload-box">
+			<div class="weui-imgupload">
+				<input type="file" class="weui-file" id="weui-file" accept="image/*">
+				<span class="iconfont"></span>
+			</div>
+		</div>
+		<div class="weui-imglist">
+		</div>
+	</div>
+	<div class="weui-bg"></div>
+	<script type="text/javascript">
+		var imglist=[]//图片模拟数据
+		new upload({
+			id:'imglist',//绑定的id
+			ico:2,//上传图标的样式 0 无图标 1图片 2文件
+			type:2,//上传样式类型 1矩形单张 2正方形多张 3圆形单张
+			deltitle:'是否删除上传图片?',//删除提示语
+			tiptitle:'请选择上传文件',//上传按钮的提示语
+			data:imglist,//绑定json数据，用于回显
+			success:function(file){//这里写上传服务器的地址
+				var uuid=getuuid();
+				var key = uuid + file.type.replace("image/", ".");
+				var scope=app.Scope;
+				var putPolicy = {
+					scope: scope + ":" + key,
+					deadline: new Date().getTime()
+				};
+				var token = genUpToken(app.AK, app.SK, putPolicy);
+				var data = new FormData();
+				data.append("file", file);
+				data.append("key", key);
+				data.append("scope", scope);
+				data.append("token", token);
+				fetch('http://upload.qiniu.com/',{
+				    method:"post",
+					mode: "no-cors",
+				    headers:{
+				       	'Content-type':'application:/x-www-form-urlencoded:charset=UTF-8',
+						"Access-Control-Allow-Origin":'*'
+				    },
+				    body:data
+				})
+				.then(function(res){
+					imglist.push(app.SignUrl + key);
+					console.log(imglist);
+				})
+				.catch(function(err){
+				    console.log("Fetch错误:"+err);
+				});
+			},
+			err:function(err){//这里错误回调函数
+				console.log(err);
+			},
+			del:function(index){
+				imglist.splice(index,1);
+				console.log(imglist);
+			}
+		})
+	</script>
+</body>
+</html>
